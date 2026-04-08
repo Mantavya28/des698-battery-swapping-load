@@ -200,17 +200,6 @@ st.markdown("""
     }
     
 
-    /* Reduced Top Padding for Sidebar to move Logo UP */
-    /* Reduced Top Padding for Sidebar to move Logo UP */
-    section[data-testid="stSidebar"] > div:first-child {
-        padding-top: 0rem !important;
-    }
-    
-    /* Aggressive pull-up for the content block */
-    [data-testid="stSidebar"] .block-container {
-        padding-top: 0rem !important;
-        margin-top: -2rem !important;
-    }
 
     /* AESTHETIC NAVIGATION BUTTONS */
     /* Target radio labels to look like cards */
@@ -386,19 +375,6 @@ st.markdown("""
         margin-top: 0rem !important;
     }
 
-    /* Sidebar logo adjustments - PIXEL ART STYLE */
-    .stSidebar .css-1lsmgbg img, 
-    [data-testid="stSidebar"] img {
-        border-radius: 0px !important; 
-        border: none !important;
-        image-rendering: pixelated !important; 
-        image-rendering: -moz-crisp-edges !important;
-        image-rendering: crisp-edges !important;
-        margin-bottom: 20px !important;
-        /* Ensure logo itself has no margin */
-        margin-top: 0px !important;
-        width: 100%;
-    }
     
     /* HIDE STREAMLIT ELEMENT TOOLBAR (Floating buttons over charts) */
     [data-testid="stElementToolbar"] {

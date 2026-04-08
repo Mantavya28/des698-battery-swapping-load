@@ -60,8 +60,7 @@ hacksmart_demo/
 ├── full_dataset.csv
 ├── demand.csv
 ├── topology.csv
-├── stations.csv
-└── greenswap_logo.png
+└── stations.csv
 ```
 
 ## Optimizations Applied
