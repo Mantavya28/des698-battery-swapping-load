@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-from simulation import run_simulation, load_demand_curve
+from simulation import run_simulation, load_demand_curve, generate_simulation_curve
 
 # ── PAGE CONFIG ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -128,11 +128,11 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
 # ── LOAD DEMAND CURVE ─────────────────────────────────────────────────────────
 @st.cache_data
-def get_demand_curve() -> np.ndarray:
+def get_base_curve() -> np.ndarray:
     return load_demand_curve()
 
 
-BASE_CURVE = get_demand_curve()
+BASE_CURVE = get_base_curve()
 
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -141,8 +141,12 @@ with st.sidebar:
     st.caption("City-Level EV Battery Swap Simulation")
     st.markdown("---")
 
-    st.markdown("**🏙️ City Demand**")
-    max_demand = st.slider("Peak demand (swaps / 15 min)", 10, 500, 150, step=5)
+    st.markdown("**🏙️ City Demand Peaks**")
+    m_peak = st.slider("Morning Peak (swaps/15min)", 10, 500, 120, step=5, help="Peak arrivals around 09:00")
+    e_peak = st.slider("Evening Peak (swaps/15min)", 10, 500, 150, step=5, help="Peak arrivals around 18:30")
+
+    # Generate the curve based on user selection
+    DYNAMIC_CURVE = generate_simulation_curve(m_peak, e_peak)
 
     st.markdown("**🏬 Network Configuration**")
     num_stations = st.slider("Number of stations",     1, 20, 8)
@@ -191,7 +195,7 @@ st.markdown("""
 st.markdown('<div class="sec-head">📈 City Demand Profile</div>', unsafe_allow_html=True)
 st.markdown(
     f'<div class="sec-sub">Typical 24-hour swap demand curve derived from historical data &nbsp;·&nbsp; '
-    f'Peak = {max_demand} swaps / 15 min</div>',
+    f'Expected Peak = {int(np.max(DYNAMIC_CURVE))} swaps / 15 min</div>',
     unsafe_allow_html=True,
 )
 
@@ -201,12 +205,13 @@ with st.container():
     ax_d.set_facecolor("#F8FAFC")
 
     slots = np.arange(96)
-    scaled = BASE_CURVE * max_demand
+    scaled = DYNAMIC_CURVE
+    max_val = np.max(scaled)
 
     ax_d.fill_between(slots, scaled, alpha=0.12, color="#2563EB")
     ax_d.plot(slots, scaled, color="#2563EB", linewidth=2.0)
-    ax_d.axhline(max_demand, color="#EF4444", linewidth=1.0, linestyle="--", alpha=0.55,
-                 label=f"Peak = {max_demand}")
+    ax_d.axhline(max_val, color="#EF4444", linewidth=1.0, linestyle="--", alpha=0.55,
+                 label=f"Peak = {max_val:.0f}")
 
     ax_d.set_xlim(0, 95)
     ax_d.set_ylim(0)
@@ -232,8 +237,8 @@ if "results" not in st.session_state:
 if run_btn:
     with st.spinner("Running M/M/c/K simulation…"):
         st.session_state.results = run_simulation(
-            max_demand=max_demand,
-            demand_curve=BASE_CURVE,
+            max_demand=int(np.max(DYNAMIC_CURVE)),
+            demand_curve=DYNAMIC_CURVE / (np.max(DYNAMIC_CURVE) if np.max(DYNAMIC_CURVE) > 0 else 1),
             num_stations=num_stations,
             chargers_per_station=chargers_per,
             charger_power_kw=charger_kw,

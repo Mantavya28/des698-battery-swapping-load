@@ -49,6 +49,36 @@ def load_demand_curve() -> np.ndarray:
         return curve / curve.max()
 
 
+def generate_simulation_curve(morning_peak: float, evening_peak: float) -> np.ndarray:
+    """
+    Generates a demand curve (swaps per 15-min slot) by scaling the historic
+    profile to hit non-normalized absolute morning and evening peaks.
+    
+    Morning window: 05:00 - 14:00 (slots 20 - 56)
+    Evening window: 14:00 - 05:00 (slots 56 - 20)
+    """
+    base_curve = load_demand_curve()
+    
+    # 1. Identify current peak indices in normalized curve
+    # Values represent mid-points of typical rush hours
+    # slot 34 = 08:30, slot 74 = 18:30
+    current_m_peak = np.max(base_curve[20:56])
+    current_e_peak = np.max(base_curve[56:88])
+    
+    # 2. Create scaling mask
+    # We use a sigmoid-like transition at 2 PM (slot 56) to smoothly switch 
+    # between morning and evening scaling factors
+    t = np.arange(96)
+    transition = 1 / (1 + np.exp(-0.5 * (t - 56)))
+    
+    m_scale = morning_peak / current_m_peak if current_m_peak > 0 else 0
+    e_scale = evening_peak / current_e_peak if current_e_peak > 0 else 0
+    
+    scales = m_scale * (1 - transition) + e_scale * transition
+    
+    return base_curve * scales
+
+
 def run_simulation(
     max_demand: int,
     demand_curve: np.ndarray,
